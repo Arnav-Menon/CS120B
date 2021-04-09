@@ -33,16 +33,16 @@ int main(void) {
 	    cntavail = 0x00; // reset it every iteration so the value doesn't add up
 
 	    // 2) perform computation
-	    if (PA_0 == 0x01) {
+	    if (PA_0 == 0x00) {
 		    cntavail++; 
 	    }
-	    if (PA_1 == 0x02) {
+	    if (PA_1 == 0x00) {
 		    cntavail++;
 	    }
-	    if (PA_2 == 0x04) {
+	    if (PA_2 == 0x00) {
 		    cntavail++;
 	    }
-	    if (PA_3 == 0x08) {
+	    if (PA_3 == 0x00) {
 		    cntavail++;
 	    }
 	    
