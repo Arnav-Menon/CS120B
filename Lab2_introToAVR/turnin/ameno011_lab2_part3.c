@@ -50,7 +50,7 @@ int main(void) {
 	    PORTC = cntavail;
 
 	    // 4) update PC7 if all spaces are full
-	    if (cntavail == 0x04) {
+	    if (cntavail == 0x00) {
 		    PORTC = PORTC | 0x80; // assign PC7 to 1
 	    }
 
