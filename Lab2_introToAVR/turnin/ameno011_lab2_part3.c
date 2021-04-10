@@ -33,16 +33,16 @@ int main(void) {
 	    cntavail = 0x00; // reset it every iteration so the value doesn't add up
 
 	    // 2) perform computation
-	    if (PA_0 == 0x01) {
+	    if (PA_0 == 0x00) {
 		    cntavail++; 
 	    }
-	    if (PA_1 == 0x02) {
+	    if (PA_1 == 0x00) {
 		    cntavail++;
 	    }
-	    if (PA_2 == 0x04) {
+	    if (PA_2 == 0x00) {
 		    cntavail++;
 	    }
-	    if (PA_3 == 0x08) {
+	    if (PA_3 == 0x00) {
 		    cntavail++;
 	    }
 	    
@@ -50,7 +50,7 @@ int main(void) {
 	    PORTC = cntavail;
 
 	    // 4) update PC7 if all spaces are full
-	    if (cntavail == 0x04) {
+	    if (cntavail == 0x00) {
 		    PORTC = PORTC | 0x80; // assign PC7 to 1
 	    }
 
