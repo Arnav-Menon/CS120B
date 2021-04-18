@@ -1,3 +1,0 @@
-From VM to Gunnu2 Server: scp -r <folder_name> gunnu@gunnu2:/home/gunnu (IN VM)
-
-From Gunnu2 to Local Machine: scp -r gunnu@gunnu2:/home/gunnu/<folder_name> ./ (IN WT)
