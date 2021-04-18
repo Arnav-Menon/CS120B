@@ -15,27 +15,29 @@
 # that they are not ran in isolation but in the order shown and the state of the device is not reset or 
 # altered in between executions (unless preconditions are used).
 tests = [ 
-        {'description': 'PINA: 0x04, 0x00 => PORTB: 0x00, state: SM1_Fail',
+        {'description': 'PINA: 0x04, 0x00, 0x02, 0x00 => PORTB: 0x01, state: SM1_Fail',
         'steps': [ 
-                {'inputs': [('PINA', 0x04)], 'iterations': 2 },
-                {'inputs': [('PINA', 0x00)], 'iterations': 2 },
+                {'inputs': [('PINA', 0x04)], 'iterations': 5 },
+                {'inputs': [('PINA', 0x00)], 'iterations': 5 },
+                {'inputs': [('PINA', 0x02)], 'iterations': 5 },
+                {'inputs': [('PINA', 0x00)], 'iterations': 5 },
+            ],
+        'expected': [('PORTB', 0x01)],
+        },
+        {'description': 'PINA: 0x80 => PORTB: 0x00, state: SM1_Fail',
+        'steps': [
+                {'inputs': [('PINA', 0x80)], 'iterations': 5 },
             ],
         'expected': [('PORTB', 0x00)],
         },
-        {'description': 'PINA: 0x04, 0x02 => PORTB: 0x01, state: SM1_Unlock',
-        'steps': [ 
-                {'inputs': [('PINA', 0x04)], 'iterations': 2 },
-                {'inputs': [('PINA', 0x02)], 'iterations': 2 },
+        {'description': 'PINA: 0x00, 0x04, 0x02, 0x00 => PORTB: 0x00, state: SM1_Fail',
+        'steps': [
+                {'inputs': [('PINA', 0x00)], 'iterations': 1 },
+                {'inputs': [('PINA', 0x04)], 'iterations': 1 },
+                {'inputs': [('PINA', 0x02)], 'iterations': 1 },
+                {'inputs': [('PINA', 0x00)], 'iterations': 1 },
             ],
-        'expected': [('PORTB', 0x01)],
-        },
-        {'description': 'PINA: 0x00, 0x00, 0x00 => PORTB: 0x00, state: SM1_Unlock',
-        'steps': [ 
-                {'inputs': [('PINA', 0x00)], 'iterations': 2 },
-                {'inputs': [('PINA', 0x00)], 'iterations': 2 },
-                {'inputs': [('PINA', 0x00)], 'iterations': 2 },
-            ],
-        'expected': [('PORTB', 0x01)],
+        'expected': [('PORTB', 0x00)],
         },
 
 ]
@@ -43,5 +45,5 @@ tests = [
 # Optionally you can add a set of "watch" variables these need to be global or static and may need
 # to be scoped at the function level (for static variables) if there are naming conflicts. The 
 # variables listed here will display everytime you hit (and stop at) a breakpoint
-watch = ['state','PORTB']
+watch = ['state', 'PINA', 'PORTB']
 

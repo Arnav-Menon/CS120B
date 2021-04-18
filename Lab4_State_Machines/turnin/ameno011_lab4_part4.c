@@ -12,7 +12,7 @@
 #include "simAVRHeader.h"
 #endif
 
-enum STATES { SM1_Start, SM1_Lock, SM1_ActuallyWait, SM1_WaitUnlock, SM1_Unlock1, SM1_Unlock2 } state;
+enum STATES { SM1_Start, SM1_Lock, SM1_WaitUnlock, SM1_Unlock1, SM1_Unlock2 } state;
 void Tick() {
 
         unsigned char x = PINA & 0x07;
@@ -45,57 +45,35 @@ void Tick() {
                         if (lock == 0x80) {
                                 state = SM1_Lock;
                         }
-                        else if (PINA == 0x06) {
-                                state = SM1_Lock;
+                        else if (pound == 0x04 || PINA == 0x00) {
+                                state = SM1_WaitUnlock;
                         }
-			else if (pound == 0x04) {
-				state = SM1_Unlock1;
-			}
-			else if (PINA == 0x00) {
-				state = SM1_ActuallyWait;
-			}
-                        //else if (y == 0x02) {
-                        //        state = SM1_Unlock2;
-                        //}
+                        else if (y == 0x02) {
+                                state = SM1_Unlock2;
+                        }
                         else {
                                 state = SM1_Lock;
                         }
                         break;
-		case SM1_ActuallyWait:
-			if (y == 0x02) {
-				state = SM1_Unlock2;
-			}
-			else if (PINA == 0x00) {
-				state = SM1_ActuallyWait;
-			}
-			else {
-				state = SM1_Lock;
-			}
-			break;
                 case SM1_WaitUnlock:
-                        if (PINA == 0x06) {
-                                state = SM1_Lock;
+                        if (y == 0x02) {
+                                state = SM1_Unlock2;
                         }
-			//else if (y == 0x02) {
-			//	state = SM1_Unlock2;
-			//}
                         else if (pound == 0x04 || PINA == 0x00) {
                                 state = SM1_WaitUnlock;
                         }
-			else if (y == 0x02) {
-				state = SM1_Unlock2;
-			}
                         else {
                                 state = SM1_Lock;
                         }
                         break;
                 case SM1_Unlock2:
-                        if (lock == 0x80 || PINA == 0x06) {
+                        if (lock == 0x80) {
                               state = SM1_Lock;
                         }
-                        else {
-                              state = SM1_WaitUnlock;
-                        }
+			else {
+				state = SM1_WaitUnlock;
+			}
+                        //state = SM1_Lock; // unconditionally reset
                         break;
                 default:
                         state = SM1_Start;
@@ -109,14 +87,17 @@ void Tick() {
                 case SM1_Lock:
                         PORTB = 0x00;
                         break;
-		case SM1_ActuallyWait:
-			break;
                 case SM1_Unlock1:
                         break;
                 case SM1_WaitUnlock:
                         break;
                 case SM1_Unlock2:
-                        PORTB = 0x01;
+                        if (PORTB == 0x01) {
+                                PORTB = 0x00;
+                        }
+                        else {
+                                PORTB = 0x01;
+                        }
                         break;
                 default:
                         break;
