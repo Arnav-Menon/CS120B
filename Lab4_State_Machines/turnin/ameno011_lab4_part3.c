@@ -12,98 +12,67 @@
 #include "simAVRHeader.h"
 #endif
 
-enum STATES { SM1_Start, SM1_ReleaseX, SM1_Unlock, SM1_Lock, SM1_Fail, SM1_Wait } state;
+enum STATES { SM1_Start, SM1_Lock, SM1_Unlock1, SM1_Unlock2 } state;
 void Tick() {
+	
+	unsigned char x = PINA & 0x01;
+	unsigned char y = PINA & 0x02;
+	unsigned char pound = PINA & 0x04;
+	unsigned char lock = PINA & 0x80;
+
 	// state transitions
 	switch(state) {
 		case SM1_Start:
-			if ((PINA & 0x07) == 0x04) { // if PA2 == '#'
-				state = SM1_ReleaseX;
-			}
-			else if ((PINA & 0x07) == 0x06) {
-				state = SM1_Fail;
-			}
-			else {
-				state = SM1_Wait;
-			}
-			break;
-		case SM1_ReleaseX:
-			if ((PINA & 0x07) == 0x04) { // if button still pressed
-				state = SM1_ReleaseX;
-			}
-			else if ((PINA & 0x07) == 0x06) { 
-				state = SM1_Fail;
-			}
-			else if ((PINA & 0x07) == 0x02) {
-				state = SM1_Unlock;
-			}
-			else {
-				state = SM1_Wait;
-			}
-			break;
-		case SM1_Unlock:
-			if ((PINA & 0x87) == 0x80) { // if PA7 == 1 inside house
-				state = SM1_Lock;
-			}
-			else if ((PINA & 0x07) == 0x02) {
-				state = SM1_Unlock;
-			}
-			else {
-				state = SM1_Wait;
-			}
+			state = SM1_Lock;
 			break;
 		case SM1_Lock:
-			state = SM1_Wait;
-			break;
-		case SM1_Fail:
-			if ((PINA & 0x07) == 0x04) { // if PA2 == '#'
-				state = SM1_ReleaseX;
+			if (lock) {
+				state = SM1_Lock;
+			}
+			else if (pound && !y && !x) {
+				state = SM1_Unlock1;
 			}
 			else {
-				state = SM1_Fail;
+				state = SM1_Lock;
 			}
 			break;
-		case SM1_Wait:
-			if ((PINA & 0x07) == 0x06) {
-				state = SM1_Fail;
+		case SM1_Unlock1:
+			if (lock) {
+				state = SM1_Lock;
 			}
-			else if ((PINA & 0x07) == 0x04) {
-				state = SM1_ReleaseX;
+			else if (!pound && y && !x) {
+				state = SM1_Unlock2;
 			}
-			else if ((PINA & 0x07) == 0x02) { // if PA1 = 'Y'
-				state = SM1_Unlock;
+			else {
+				state = SM1_Lock;
 			}
-			else if ((PINA & 0x87) == 0x80) {
+			break;
+		case SM1_Unlock2:
+			if (lock) {
 				state = SM1_Lock;
 			}
 			else {
-				state = SM1_Wait;
+				state = SM1_Unlock2;
 			}
 			break;
 		default:
 			state = SM1_Start;
+			break;
 	}
 
 	// state actions
 	switch(state) {
 		case SM1_Start:
-			PORTB = 0x00;
-			break;
-		case SM1_ReleaseX:
-			break;
-		case SM1_Unlock:
-			PORTB = 0x01;
 			break;
 		case SM1_Lock:
 			PORTB = 0x00;
 			break;
-		case SM1_Fail:
-			PORTB = 0x00;
+		case SM1_Unlock1:
 			break;
-		case SM1_Wait:
+		case SM1_Unlock2:
+			PORTB = 0x01;
 			break;
 		default:
-			PORTB = 0x00;
 			break;
 	}
 }
@@ -119,4 +88,3 @@ int main(void) {
     }
     return 1;
 }
-
