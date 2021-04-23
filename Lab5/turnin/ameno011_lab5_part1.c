@@ -1,4 +1,3 @@
-  
 /*	Author: lab
  *  Partner(s) Name: 
  *	Lab Section:21
@@ -54,15 +53,3 @@ int main(void) {
     
     return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
