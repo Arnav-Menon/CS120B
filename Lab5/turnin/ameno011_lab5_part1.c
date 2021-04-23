@@ -24,7 +24,7 @@ int main(void) {
     /* Insert your solution below */
     while (1) {
 	    
-	    tempA = PINA & 0x0F; // get lower four bits
+	    tempA = (~PINA & 0x0F); // get lower four bits
 
 	    if (tempA > 0x0C) { // level is 13, 14, or 15
 		    tempC = 0x3F; // light PC5..PC0

@@ -47,4 +47,3 @@ tests = [
 # to be scoped at the function level (for static variables) if there are naming conflicts. The 
 # variables listed here will display everytime you hit (and stop at) a breakpoint
 watch = ['state','PORTC']
-

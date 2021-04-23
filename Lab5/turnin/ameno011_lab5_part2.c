@@ -20,16 +20,21 @@ void Tick() {
 			state = SM1_Begin;
 			break;
 		case SM1_Begin:
-			state = SM1_Init;
-			break;
-		case SM1_Init:
-			if ((PINA & 0x03) == 0x03) {
-				state = SM1_Reset;
-			}
-			else if ((PINA & 0x01) == 0x01) {
+			if ((~PINA & 0x01) == 0x01) {
 				state = SM1_PlusOn;
 			}
-			else if ((PINA & 0x02) == 0x02) {
+			else {
+				state = SM1_Init;
+			}
+			break;
+		case SM1_Init:
+			if ((~PINA & 0x03) == 0x03) {
+				state = SM1_Reset;
+			}
+			else if ((~PINA & 0x01) == 0x01) {
+				state = SM1_PlusOn;
+			}
+			else if ((~PINA & 0x02) == 0x02) {
 				state = SM1_MinusOn;
 			}
 			break;
@@ -37,13 +42,13 @@ void Tick() {
 			state = SM1_Plus;
 			break;
 		case SM1_Plus:
-			if ((PINA & 0x03) == 0x03) {
+			if ((~PINA & 0x03) == 0x03) {
 				state = SM1_Reset;
 			}
-			else if ((PINA & 0x01) == 0x01) {
+			else if ((~PINA & 0x01) == 0x01) {
 				state = SM1_Plus;
 			}
-			else if ((PINA & 0x02) == 0x02) {
+			else if ((~PINA & 0x02) == 0x02) {
 				state = SM1_MinusOn;
 			}
 			else {
@@ -54,13 +59,13 @@ void Tick() {
 			state = SM1_Minus;
 			break;
 		case SM1_Minus:
-			if ((PINA & 0x03) == 0x03) {
+			if ((~PINA & 0x03) == 0x03) {
 				state = SM1_Reset;
 			}
-			else if ((PINA & 0x01) == 0x01) {
+			else if ((~PINA & 0x01) == 0x01) {
 				state = SM1_PlusOn;
 			}
-			else if ((PINA & 0x02) == 0x02) {
+			else if ((~PINA & 0x02) == 0x02) {
 				state = SM1_Minus;
 			}
 			else {
@@ -68,7 +73,7 @@ void Tick() {
 			}
 			break;
 		case SM1_Reset:
-			if ((PINA & 0x03) == 0x03) {
+			if ((~PINA & 0x03) == 0x03) {
 				state = SM1_Reset;
 			}
 			else {
@@ -124,4 +129,5 @@ int main(void) {
     }
     return 1;
 }
+
 
