@@ -1,0 +1,3 @@
+scp -r <folder_name> gunnnu@gunnu2:/home/gunnu/
+
+scp -r gunnu@gunnu2:/home/gunnu/<folder_name> ./
