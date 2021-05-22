@@ -1,13 +1,13 @@
 /*	Author Arnav Menon:
  *  Partner(s) Name: 
  *	Lab Section: 21
- *	Assignment: Lab #10  Exercise #3
+ *	Assignment: Lab #10  Exercise #4
  *	Exercise Description: [optional - include for your own benefit]
  *
  *	I acknowledge all content contained herein, excluding template or example
  *	code, is my own original work.
  *
- *	LINK TO VIDEO: https://drive.google.com/file/d/1oWGjxd_3d4cpPqN4qUwlwKlV2uuXPAvr/view?usp=sharing
+ *	LINK TO VIDEO:
  */
 #include <avr/io.h>
 #ifdef _SIMULATE_
@@ -27,7 +27,9 @@ typedef struct task {
 unsigned char x;
 unsigned char keypad_input = 0x00;
 unsigned int myIndex = 0;
+unsigned int newIndex = 0;
 unsigned int isLocked = 1; // initialize as true
+unsigned int hasChanged = 0; // initialize as false
 
 // 0.954 hz is lowest frequency possible with this function
 // based on settings in PWM_on()
@@ -71,6 +73,7 @@ void PWM_off() {
 
 enum KeypadSMStates { Start, Check, Wait, Wait_1 };
 unsigned char array[6] = {'#', '1', '2', '3', '4', '5'};
+unsigned char newArray[4] = { ' ', ' ', ' ', ' '};
 int KeypadSM (int state) {
 	x = GetKeypadKey();
 	switch(state) {
@@ -78,33 +81,67 @@ int KeypadSM (int state) {
 			state = Check;
 			break;
 		case Check:
-			if (x == array[myIndex])
-				state = Wait;
-			else if (x == '\0') // still waiting on input
-				state = Wait;
-			else { // input was incorrect, start over
-				state = Start;
-				myIndex = 0;
+			if (!hasChanged) {
+				if (x == array[myIndex])
+					state = Wait;
+				else if (x == '\0') // still waiting on input
+					state = Wait;
+				else { // input was incorrect, start over
+					state = Start;
+					myIndex = 0;
+				}
+			}
+			else {
+				if (x == newArray[newIndex])
+					state = Wait;
+				else if (x == '\0')
+					state = Wait;
+				else {
+					state = Start;
+					newIndex = 0;
+				}
 			}
 			break;
 		case Wait:
-			if (x == '\0') { // button was "released"
-				state = Check;
-			}
-			else if (x == array[myIndex]) {
-				state = Wait_1;
+			if (!hasChanged) {
+				if (x == '\0') { // button was "released"
+					state = Check;
+				}
+				else if (x == array[myIndex]) {
+					state = Wait_1;
+				}
+				else {
+					state = Start;
+					myIndex = 0;
+				}
 			}
 			else {
-				state = Start;
-				myIndex = 0;
-			}
+				if (x == '\0') 
+					state = Check;
+				else if (x == newArray[newIndex])
+					state = Wait_1;
+				else {
+					state = Start;
+					newIndex = 0;
+				}
+			}	
 			break;
 		case Wait_1:
-			if (x == array[myIndex])
-				state = Wait_1;
-			else if (x == '\0') {
-				myIndex++;
-				state = Check;
+			if (!hasChanged) {
+				if (x == array[myIndex])
+					state = Wait_1;
+				else if (x == '\0') {
+					myIndex++;
+					state = Check;
+				}
+			}
+			else {
+				if (x == newArray[newIndex])
+					state = Wait_1;
+				else if (x == '\0') {
+					newIndex++;
+					state = Check;
+				}
 			}
 			break;
 		default:
@@ -115,10 +152,19 @@ int KeypadSM (int state) {
 	switch(state) {
 		case Start: PORTB = 0x00; break;
 		case Check:
-		    if (myIndex == 6) { // successfully unlocoked door
-			    PORTB = 0x01;
-			    myIndex = 0x00;
-			    isLocked = 0; // unlock door
+		    if (!hasChanged) {
+		   	 if (myIndex == 6) { // successfully unlocoked door
+				    PORTB = 0x01;
+				    myIndex = 0x00;
+				    isLocked = 0; // unlock door
+			    }
+		    }
+		    else {
+			    if (newIndex == 4) {
+				    PORTB = 0x01;
+				    newIndex = 0x00;
+				    isLocked = 0;
+			    }
 		    }
 		    break;
 		case Wait: break;
@@ -214,11 +260,11 @@ int PlaySpeaker(int state) {
 	}
 
 	switch(state) {
-		case Speaker_Init: PORTA = 0x01; break;
+		case Speaker_Init: break;
 		case Speaker_Check: break;
-		case Speaker_Start: PORTA = 0x02; i = 0; break;
+		case Speaker_Start: i = 0; break;
 		case Speaker_Play:
-			PORTA = 0x03;
+		//	PORTA = 0x03;
 			if (i < 2)
 				set_PWM(261.63);
 			else if (i < 6)
@@ -244,10 +290,80 @@ int PlaySpeaker(int state) {
 			i++;
 			break;
 		case Speaker_Release:
-			PORTA = 0x04;
+			//PORTA = 0x04;
 			PWM_off();
 			i = 0;
 			break;
+		default: break;
+	}
+
+	return state;
+}
+
+enum NewPasswordStates { New_Init, New_Signal, New_Password, New_Done, New_Release, New_Wait };
+unsigned char y;
+int NewPassword(int state) {
+	y = GetKeypadKey();
+
+	switch(state) {
+		case New_Init:
+			state = New_Signal;
+			break;
+		case New_Signal:
+			PORTA = 0xFF;
+			if (y == '*' && (~PINB & 0x80) == 0x80) { // if '*' and PB7 are pressed, we want to start recording new password
+				state = New_Release;
+				PORTA = 0x01;
+			}
+			else
+				state = New_Signal; // wait for the two inputs
+			break;
+		case New_Release:
+			if (y == '*' && (~PINB & 0x80) == 0x80)  // still pressed form last time, wait for realase
+				state = New_Release;
+			else if (y != '\0' && (~PINB & 0x80) != 0x80) // wait for valid input
+				state = New_Password;
+			else
+				state = New_Release;
+			break;
+		case New_Password:
+			PORTA = 0x02;
+			if ((~PIND & 0x40) == 0x40) // PD7 pressed, done processign new password
+				state = New_Done;
+			else  
+				state = New_Wait;
+			break;
+		case New_Wait:
+			if (y != '\0')
+				state = New_Wait;
+			else
+				state = New_Release;
+			break;
+		case New_Done:
+			PORTA = 0xFF;
+			if ((~PIND & 0x40) == 0x40) // button still pressed, wait for release
+				state = New_Done;
+			else
+				state = New_Init;
+			break;
+		default:
+			state = New_Init;	
+			break;
+	}
+
+	switch(state) {
+		case New_Init: break;
+		case New_Signal: break;
+		case New_Release: break;
+		case New_Wait: break;
+		case New_Password: 
+			if (y != '\0' && newIndex < 4) {
+				newArray[newIndex] = y;
+				newIndex++;
+			}
+			PORTB = newIndex;
+			break;
+		case New_Done: hasChanged = 1; newIndex = 0; break;
 		default: break;
 	}
 
@@ -258,11 +374,11 @@ int main(void) {
     /* Insert DDR and PORT initializations */
     DDRC = 0xF0; PORTC = 0x0F; // inputs
     DDRB = 0x5F; PORTB = 0xE0; // outputs
-    
+    DDRD = 0x3F; PORTD = 0x00; // PD7,6 as input
     DDRA = 0x0E; PORTA = 0x00; // high 4 input, low 4 output
 
-    static task task1, task2, task3;
-    task *tasks[] = { &task1, &task2, &task3 };
+    static task task1, task2, task3, task4;
+    task *tasks[] = { &task1, &task2, &task3, &task4 };
     const unsigned short numTasks = sizeof(tasks)/sizeof(task*);
 
     const char start = -1;
@@ -283,6 +399,12 @@ int main(void) {
     task3.period = 100;
     task3.elapsedTime = task3.period;
     task3.TickFct = &PlaySpeaker;
+
+    // Task 4 (NewPassword)
+    task4.state = start;
+    task4.period = 50;
+    task4.elapsedTime = task4.period;
+    task4.TickFct = &NewPassword;
 
     TimerSet(50);
     TimerOn();
