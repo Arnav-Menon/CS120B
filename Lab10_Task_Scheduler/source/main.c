@@ -313,7 +313,7 @@ int NewPassword(int state) {
 			PORTA = 0xFF;
 			if (y == '*' && (~PINB & 0x80) == 0x80) { // if '*' and PB7 are pressed, we want to start recording new password
 				state = New_Release;
-				PORTA = 0x01;
+	//			PORTA = 0x01;
 			}
 			else
 				state = New_Signal; // wait for the two inputs
@@ -340,7 +340,7 @@ int NewPassword(int state) {
 				state = New_Release;
 			break;
 		case New_Done:
-			PORTA = 0xFF;
+	//		PORTA = 0x0A;
 			if ((~PIND & 0x40) == 0x40) // button still pressed, wait for release
 				state = New_Done;
 			else
@@ -361,7 +361,7 @@ int NewPassword(int state) {
 				newArray[newIndex] = y;
 				newIndex++;
 			}
-			PORTB = newIndex;
+	//		PORTB = newIndex;
 			break;
 		case New_Done: hasChanged = 1; newIndex = 0; break;
 		default: break;
