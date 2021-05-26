@@ -48,7 +48,8 @@ PROGRAM=avrdude
 PROGRAMMER=atmelice_isp
 MEMORY=flash
 #mem:op:file where op is (w)rite, (r)ead, (v)erify; performed in the order specified
-VERBOSITY=#-v -v ... etc. to have more verbose output. Normal output is usually enough unless something goes wrong. 
+#VERBOSITY=#-v -v ... etc. to have more verbose output. Normal output is usually enough unless something goes wrong. 
+VERBOSITY=-v -v 
 ADDVERBOSITY=$(info Add additional -v to the \"avrdude -c ...\" command above for more details on the error)
 HIGH=hfuse
 HDEFAULT=0x99
@@ -109,7 +110,9 @@ $(PATHB)main.hex: $(PATHO)main.elf
 	@$(OBJCOPY) $(OBJFLAGS) $< $@
 
 $(PATHO)main.elf: $(OBJS)
+	echo $(SOURCES)
 	@$(AVR) $(DEBUGFLAGS) $(SIMFLAGS) $(FLAGS) $(INCLUDES) -o $@ $^
+	echo "ELF DONE"
 
 $(PATHO)%.o: $(PATHS)%.c
 	@$(AVR) $(DEBUGFLAGS) $(SIMFLAGS) $(FLAGS) $(INCLUDES) -c -o $@ $<

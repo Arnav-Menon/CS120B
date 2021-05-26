@@ -10,10 +10,9 @@
 #include <avr/io.h>
 #ifdef _SIMULATE_
 #include "simAVRHeader.h"
-#include "lcd.h" // LCD code in header directory
 #endif
 
-void FillScreen();
+#include "lcd.h" // LCD source code in source directory
 
 int main(void) {
     /* Insert DDR and PORT initializations */
@@ -22,9 +21,9 @@ int main(void) {
     LCD_Init(); 			// initialize LCD controller
     LCD_Message("Hello World!");	// welcome message
     msDelay(2000);			// wait
-    /* Insert your solution below */
     while (1) {
-	    FillScreen();		// fill screen with ASCII characters
+	   FillScreen();		// fill screen with ASCII characters
     }
+ 
     return 1;
 }
