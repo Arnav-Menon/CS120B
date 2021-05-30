@@ -11,7 +11,7 @@
 #define F_CPU 16000000L			// run CPU t 16 MHz
 #define LED	5 			// LED on PD5
 #define ClearBit(x, y) x &= ~_BV(y)
-#define SetBit(x, y) x |= _BV(y)
+#define SetBitLCD(x, y) x |= _BV(y)
 #define NUMCHARS 64					// number of chars per screen
 
 // ------------------------------------------------------------------------------

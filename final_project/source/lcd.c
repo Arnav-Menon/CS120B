@@ -15,24 +15,24 @@ void msDelay(int delay) {
 }
 
 void FlashLED() {
-        SetBit(PORTD, LED); // PD5
+        SetBitLCD(PORTD, LED); // PD5
         msDelay(250);
         ClearBit(PORTD, LED);
         msDelay(250);
 }
 
 void PulseEnableLine() {
-        SetBit(PORTD, LCD_E);                           // take LCD enable line high
+        SetBitLCD(PORTD, LCD_E);                           // take LCD enable line high
         _delay_us(40);                                  // wait 40 microseconds
         ClearBit(PORTD, LCD_E);                         // take LCD enable line low
 }
 
 void SendNibble(byte data) {
         PORTD &= 0xC3;                                  // 1100.0011 = clear 4 data lines into controller
-        if (data & _BV(4)) SetBit(PORTD, DAT4);
-        if (data & _BV(5)) SetBit(PORTD, DAT5);
-        if (data & _BV(6)) SetBit(PORTD, DAT6);
-        if (data & _BV(7)) SetBit(PORTD, DAT7);
+        if (data & _BV(4)) SetBitLCD(PORTD, DAT4);
+        if (data & _BV(5)) SetBitLCD(PORTD, DAT5);
+        if (data & _BV(6)) SetBitLCD(PORTD, DAT6);
+        if (data & _BV(7)) SetBitLCD(PORTD, DAT7);
         PulseEnableLine();                              // clock 4 bits into controller
 }
 
@@ -48,7 +48,7 @@ void LCD_Cmd(byte cmd) {
 }
 
 void LCD_Char(byte ch) {
-        SetBit(PORTD, LCD_RS);                          // R/S line 1 = character data
+        SetBitLCD(PORTD, LCD_RS);                          // R/S line 1 = character data
         SendByte(ch);                                   // send it
 }
 
