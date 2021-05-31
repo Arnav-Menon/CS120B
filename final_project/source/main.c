@@ -138,7 +138,73 @@ int ButtonSM (int state) {
 			   }
 			   break;
 		case Release: /*PORTB = 0x10; score--;*/ break;
-		default: PORTB = 0x09; break;
+		default: break;
+	}
+
+	return state;
+}
+
+enum PianoInputsState { Piano_Start, Piano_Check };
+int PianoSM (int state) {
+	switch(state) {
+		case Piano_Start:
+			if ((~PINA & 0x01) == 0x01)
+				state = Piano_Check;
+			else if ((~PINA & 0x02) == 0x02)
+				state = Piano_Check;
+			else if ((~PINA & 0x04) == 0x04)
+				state = Piano_Check;
+			else if ((~PINA & 0x08) == 0x08)
+				state = Piano_Check;
+			else if ((~PINA & 0x10) == 0x10)
+				state = Piano_Check;
+			else if ((~PINA & 0x20) == 0x20)
+				state = Piano_Check;
+			else if ((~PINA & 0x40) == 0x40)
+				state = Piano_Check;
+			else if ((~PINA & 0x80) == 0x80)
+				state = Piano_Check;
+			else
+				state = Piano_Start;
+			break;
+		case Piano_Check:
+			if ((~PINA & 0xFF) == 0x00)
+				state = Piano_Start;
+			else
+				state = Piano_Check;
+			break;
+		default:
+			state = Piano_Start;
+			break;
+	}
+
+	switch(state) {
+		case Piano_Start:
+			PORTB = 0x00;
+			break;
+		case Piano_Check:
+			if ((~PINA & 0x01) == 0x01)
+				PORTB = 0x01;
+			else if ((~PINA & 0x02) == 0x02)
+				PORTB = 0x02;
+			else if ((~PINA & 0x04) == 0x04)
+				PORTB = 0x03;
+			else if ((~PINA & 0x08) == 0x08)
+				PORTB = 0x04;
+			else if ((~PINA & 0x10) == 0x10)
+				PORTB = 0x05;
+			else if ((~PINA & 0x20) == 0x20)
+				PORTB = 0x06;
+			else if ((~PINA & 0x40) == 0x40)
+				PORTB = 0x07;
+			else if ((~PINA & 0x80) == 0x80)
+				PORTB = 0x08;
+			else
+				PORTB = 0xFF;
+			break;
+		default:
+			break;
+
 	}
 
 	return state;
@@ -148,9 +214,10 @@ enum PlaySpeakerState { Speaker_Init, Speaker_Check, Speaker_Start, Speaker_Play
 unsigned short i = 0;
 int PlaySpeaker(int state) {
 	//unsigned char button = ~PINA & 0x01; // check if PA0 pressed
-	PWM_on();
+	//PWM_on();
 	switch(state) {
 		case Speaker_Init:
+			PWM_on();
 			state = Speaker_Check;
 			break;
 		case Speaker_Check:
@@ -174,41 +241,54 @@ int PlaySpeaker(int state) {
 			break;
 		// play all F notes
 		case Speaker_Play_Tune_One:
-			if (i >= 11 && ((~PINC & 0x01) == 0x01)) // button still pressed after sequence is over, dont restart
+			if (i >= 11 && ((~PINC & 0x01) == 0x01)) { // button still pressed after sequence is over, dont restart
 				state = Speaker_Release;
-			else if (i >= 11) // melody over
+				PWM_off();
+			}
+			else if (i >= 11) { // melody over
 				state = Speaker_Init;
+				PWM_off();
+			}
 			else
 				state = Speaker_Play_Tune_One;
 			break;
 		// play scale starting at E
 		case Speaker_Play_Tune_Two:
-			if (i >= 8 && ((~PINC & 0x02) == 0x02)) // button still pressed after sequence is over, dont restart
+			if (i >= 8 && ((~PINC & 0x02) == 0x02)) { // button still pressed after sequence is over, dont restart
 				state = Speaker_Release;
-			else if (i >= 8) // melody over
+				PWM_off();
+			}
+			else if (i >= 8) { // melody over
 				state = Speaker_Init;
+				PWM_off();
+			}
 			else
 				state = Speaker_Play_Tune_Two;
 			break;
 		// play happy birthday
 		case Speaker_Play_Tune_Three:
-			PORTB = 0x00;
-			if (i >= 12 && ((~PINC & 0x02) == 0x02)) { // button still pressed after sequence is over, dont restart
+	//		PORTB = 0x00;
+			if (i >= 11 && ((~PINC & 0x02) == 0x02)) { // button still pressed after sequence is over, dont restart
 				state = Speaker_Release;
+				PWM_off();
 //				PORTB = 0x01;
 			}
-			else if (i >= 12) { // melody over
+			else if (i >= 11) { // melody over
 				state = Speaker_Init;
+				PWM_off();
 //				PORTB = 0x02;
 			}
 			else
 				state = Speaker_Play_Tune_Three;
 			break;
 		case Speaker_Release:
-			if ((~PINC & 0x01) == 0x00)
+			PWM_off();
+			if ((~PINC & 0x01) == 0x00) {
 				state = Speaker_Init;
-			else
+			}
+			else {
 				state = Speaker_Release; // wait for button unpress
+			}
 			break;
 		default:
 			state = Speaker_Init;
@@ -221,10 +301,9 @@ int PlaySpeaker(int state) {
 			tune_one = 0; 
 			tune_two = 0; 
 			tune_three = 0;
-			PORTB = 0x01; 
 			break;
 		case Speaker_Check: break;
-		case Speaker_Start: PORTB = 0x02; i = 0; break;
+		case Speaker_Start: i = 0; break;
 		case Speaker_Play_Tune_One:
 			if (i < 1)
 				set_PWM(349.23);
@@ -271,34 +350,31 @@ int PlaySpeaker(int state) {
 			i++;
 			break;
 		case Speaker_Play_Tune_Three:
-			PORTB = 0x03;
-			if (i < 1)
+			if (i < 1) 
 				set_PWM(261.63);
 			else if (i < 2)
-				set_PWM(261.63);
+				set_PWM(293.66);
 			else if (i < 3)
-				set_PWM(293.66);
+				set_PWM(261.63);
 			else if (i < 4)
-				set_PWM(261.63);
-			else if (i < 5)
 				set_PWM(349.23);
-			else if (i < 7)
+			else if (i < 6)
 				set_PWM(329.63);
+			else if (i < 7)
+				set_PWM(261.63);
 			else if (i < 8)
-				set_PWM(261.63);
-			else if (i < 9)
 				set_PWM(293.66);
-			else if (i < 10)
+			else if (i < 9)
 				set_PWM(261.63);
-			else if (i < 11)
+			else if (i < 10)
 				set_PWM(392.00);
-			else if (i < 12)
-				set_PWM(349.23);			
+			else if (i < 11)
+				set_PWM(349.23);
 			i++;
 			break;
 		case Speaker_Release:
 			PORTB = 0x04;
-			PWM_off();
+			//PWM_off();
 			i = 0;
 			tune_one = 0;
 			tune_two = 0; // reset global flag
@@ -336,11 +412,11 @@ int main(void) {
     DDRD = 0x3F; // set D0..D5 as outputs for LCD
     DDRC = 0x00; PORTC = 0xFF;  // use PORTC as inputs for keypad
     DDRB = 0xFF; // PB6 is 1 for the speaker output 
-
+    DDRA - 0x00; PORTA = 0xFF; // use PORTA as inputs for "piano"
 //    byte score = 0;
 
-    static task task1, task2, task3;
-    task *tasks[] = { &task1, &task2, &task3 };
+    static task task1, task2, task3, task4;
+    task *tasks[] = { &task1, &task2, &task3, &task4 };
     const unsigned short numTasks = sizeof(tasks)/sizeof(task*);
 
     const char start = -1;
@@ -357,24 +433,23 @@ int main(void) {
     task2.elapsedTime = task2.period;
     task2.TickFct = &PrintSM;
 
-    // Task 3(PlaySpeakerSM)
+    // Task 3 (PlaySpeakerSM)
     task3.state = start;
     task3.period = 10;
     task3.elapsedTime = task3.period;
     task3.TickFct = &PlaySpeaker;
 
+    // Task 4 (PianoInputSM)
+    task4.state = start;
+    task4.period = 10;
+    task4.elapsedTime = task4.period;
+    task4.TickFct = &PianoSM;
+
     LCD_Init(); 			// initialize LCD controller
-  /*  LCD_Message("Let's play The Tune ");	// welcome message
-    LCD_Message("Score: ");
-    LCD_Integer(score); */
     TimerSet(TIME);
     TimerOn();
     //msDelay(TIME);			// wait
     while (1) {
-/*	   LCD_Clear(); 			// clear screen otherwise it will print on top
-	   LCD_Message("Let's play The Tune ");		// fill screen with ASCII characters
-	   LCD_Message("Score: ");
-	   LCD_Integer(score);*/
 	   for (int i = 0; i < numTasks; i++) {
 		   if (tasks[i]->elapsedTime == tasks[i]->period) {
 			   tasks[i]->state = tasks[i]->TickFct(tasks[i]->state);
