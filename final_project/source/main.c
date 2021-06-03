@@ -80,6 +80,10 @@ unsigned int play_tune_one = 0; // if user wants this tune, set to 1
 unsigned int play_tune_two = 0; // if user wants this tune, set to 1
 unsigned int play_tune_three = 0; // if user wants this tune, set to 1
 
+unsigned char one[6] = { 0x10, 0x10, 0x10, 0x10, 0x10, 0x10 }; // correect sequence for tune 1
+unsigned char two[8] = { 0x20, 0x10, 0x08, 0x04, 0x02, 0x01, 0x80, 0x40 }; // tune 2
+unsigned char three[10] = { 0x80, 0x40, 0x80, 0x10, 0x20, 0x80, 0x40, 0x80, 0x08, 0x10 }; // tune 3
+
 enum ButtonSMStates { Start, Check, Release };
 int ButtonSM (int state) {
 	switch(state) {
