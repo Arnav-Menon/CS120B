@@ -76,6 +76,10 @@ unsigned int tune_one = 0; // initialze as false
 unsigned int tune_two = 0; // initialize as false
 unsigned int tune_three = 0; // initialize as false
 
+unsigned int play_tune_one = 0; // if user wants this tune, set to 1
+unsigned int play_tune_two = 0; // if user wants this tune, set to 1
+unsigned int play_tune_three = 0; // if user wants this tune, set to 1
+
 enum ButtonSMStates { Start, Check, Release };
 int ButtonSM (int state) {
 	switch(state) {
@@ -181,26 +185,46 @@ int PianoSM (int state) {
 	switch(state) {
 		case Piano_Start:
 			PORTB = 0x00;
+			if (!tune_one && !tune_two && !tune_three) // if no tunes are playing, then turn off spekaer
+				set_PWM(0);
 			break;
 		case Piano_Check:
-			if ((~PINA & 0x01) == 0x01)
+			if ((~PINA & 0x01) == 0x01) {
+				set_PWM(523.25); // high C
 				PORTB = 0x01;
-			else if ((~PINA & 0x02) == 0x02)
+			}
+			else if ((~PINA & 0x02) == 0x02) {
+				set_PWM(493.88); // B
 				PORTB = 0x02;
-			else if ((~PINA & 0x04) == 0x04)
+			}
+			else if ((~PINA & 0x04) == 0x04) {
+				set_PWM(440.00); // A
 				PORTB = 0x03;
-			else if ((~PINA & 0x08) == 0x08)
+			}
+			else if ((~PINA & 0x08) == 0x08) {
+				set_PWM(392.00); // G
 				PORTB = 0x04;
-			else if ((~PINA & 0x10) == 0x10)
+			}
+			else if ((~PINA & 0x10) == 0x10) {
+				set_PWM(349.23); // F
 				PORTB = 0x05;
-			else if ((~PINA & 0x20) == 0x20)
+			}
+			else if ((~PINA & 0x20) == 0x20) {
+				set_PWM(329.63); // E
 				PORTB = 0x06;
-			else if ((~PINA & 0x40) == 0x40)
+			}
+			else if ((~PINA & 0x40) == 0x40) {
+				set_PWM(293.66); // D
 				PORTB = 0x07;
-			else if ((~PINA & 0x80) == 0x80)
+			}
+			else if ((~PINA & 0x80) == 0x80) {
+				set_PWM(261.63); // middle C
 				PORTB = 0x08;
-			else
+			}
+			else {
+				set_PWM(0); // nothing
 				PORTB = 0xFF;
+			}
 			break;
 		default:
 			break;
@@ -227,13 +251,19 @@ int PlaySpeaker(int state) {
 				state = Speaker_Check;
 			break;
 		case Speaker_Start:
-			if (tune_one == 1)
+			if (tune_one == 1) {
+		//		PORTB = 0x01;
+				play_tune_one = 1; // set global flag as 1
 				state = Speaker_Play_Tune_One;
+			}
 			else if (tune_two == 1) {
-//				PORTB = 0x0F;
+		//		PORTB = 0x02;
+				play_tune_two = 1; // set gloal flag to 1
 				state = Speaker_Play_Tune_Two;
 			}
 			else if (tune_three == 1) {
+		//		PORTB = 0x03;
+				play_tune_three = 1; // set global flag to 1
 				state = Speaker_Play_Tune_Three;
 			}
 			else
@@ -243,11 +273,11 @@ int PlaySpeaker(int state) {
 		case Speaker_Play_Tune_One:
 			if (i >= 11 && ((~PINC & 0x01) == 0x01)) { // button still pressed after sequence is over, dont restart
 				state = Speaker_Release;
-				PWM_off();
+				set_PWM(0);
 			}
 			else if (i >= 11) { // melody over
-				state = Speaker_Init;
-				PWM_off();
+				state = Speaker_Check;
+				set_PWM(0);
 			}
 			else
 				state = Speaker_Play_Tune_One;
@@ -256,11 +286,11 @@ int PlaySpeaker(int state) {
 		case Speaker_Play_Tune_Two:
 			if (i >= 8 && ((~PINC & 0x02) == 0x02)) { // button still pressed after sequence is over, dont restart
 				state = Speaker_Release;
-				PWM_off();
+				set_PWM(0);
 			}
 			else if (i >= 8) { // melody over
-				state = Speaker_Init;
-				PWM_off();
+				state = Speaker_Check;
+				set_PWM(0);
 			}
 			else
 				state = Speaker_Play_Tune_Two;
@@ -270,12 +300,11 @@ int PlaySpeaker(int state) {
 	//		PORTB = 0x00;
 			if (i >= 11 && ((~PINC & 0x02) == 0x02)) { // button still pressed after sequence is over, dont restart
 				state = Speaker_Release;
-				PWM_off();
-//				PORTB = 0x01;
+				set_PWM(0);
 			}
 			else if (i >= 11) { // melody over
-				state = Speaker_Init;
-				PWM_off();
+				state = Speaker_Check;
+				set_PWM(0);
 //				PORTB = 0x02;
 			}
 			else
@@ -296,13 +325,12 @@ int PlaySpeaker(int state) {
 	}
 
 	switch(state) {
-		case Speaker_Init: 
-			//PWM_on();
-			tune_one = 0; 
-			tune_two = 0; 
+		case Speaker_Init: break;
+		case Speaker_Check: 
+			tune_one = 0;
+			tune_two = 0;
 			tune_three = 0;
 			break;
-		case Speaker_Check: break;
 		case Speaker_Start: i = 0; break;
 		case Speaker_Play_Tune_One:
 			if (i < 1)
