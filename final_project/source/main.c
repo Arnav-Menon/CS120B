@@ -98,18 +98,18 @@ int ButtonSM (int state) {
 		case Check:
 			if ((~PINC & 0x01) == 0x01) { // PC0 pressed, play tune_one
 				tune_one = 1;
-				state = Check;
+				state = Release;
 			}
 			else if ((~PINC & 0x02) == 0x02) { // PC1 pressed, play tune_two
 				tune_two = 1; // global flag to play tune_two
-				state = Check;
+				state = Release;
 			}
 			else if ((~PINC & 0x04) == 0x04) { // PC2 pressed, play tune_three
 				tune_three = 1;
-				state = Check;
-			}
-			else if ((~PINC & 0xFF) == 0x00) // no button is pressed
 				state = Release;
+			}
+	//		else if ((~PINC & 0xFF) == 0x00) // no button is pressed
+	//			state = Check;
 			else
 				state = Check;
 			break;
@@ -246,11 +246,15 @@ int PianoSM (int state) {
 
 enum CheckTuneOneState { One_Init, One_Check, One_Release };
 int CheckTuneOne(int state) {
-	if (tune_one == 1)
-		PORTB = 0x01;
+//	if (play_tune_one == 1)
+//		PORTB = 0x0F;
 	switch(state) {
 		case One_Init:
-			if (play_tune_one && (~PINA & 0xFF) == one[one_count]) // if user wanted tune one, check it
+			if (play_tune_one == 1)
+				PORTB = 0x0F;
+			PORTB = 0x00;
+			PORTB = one_count;
+			if ((play_tune_one == 1) && (~PINA & 0xFF) == one[one_count]) // if user wanted tune one, check it
 				state = One_Check;
 			else
 				state = One_Init;
@@ -262,8 +266,10 @@ int CheckTuneOne(int state) {
 				score++; // got the point for that tune
 				state = One_Init;
 			}
-			else if ((~PINA & 0xFF) == one[one_count] && one_count < 6) // bc 6 elements in array
+			else if ((~PINA & 0xFF) == one[one_count] && (one_count < 6)) { // bc 6 elements in array
 				state = One_Release;
+				PORTB = 0x01;
+			}
 			else
 				state = One_Init;
 			break;
@@ -279,10 +285,10 @@ int CheckTuneOne(int state) {
 
 	switch(state) {
 		case One_Init:
-			play_tune_two = 0;
-			play_tune_three = 0;
-			two_count = 0;
-			three_count = 0;
+//			play_tune_two = 0;
+//			play_tune_three = 0;
+//			two_count = 0;
+//			three_count = 0;
 			break;
 		case One_Check:
 			one_count++;
@@ -298,7 +304,7 @@ int CheckTuneOne(int state) {
 
 enum CheckTuneTwoState { Two_Init, Two_Check, Two_Release };
 int CheckTuneTwo(int state) {
-	if (tune_two == 1)
+	if (play_tune_two == 1)
 		PORTB = 0x02;
 	switch(state) {
 		case Two_Init:
@@ -331,10 +337,10 @@ int CheckTuneTwo(int state) {
 
 	switch(state) {
 		case Two_Init:
-			play_tune_one = 0;
-			play_tune_three = 0;
-			one_count = 0;
-			three_count = 0;
+//			play_tune_one = 0;
+//			play_tune_three = 0;
+//			one_count = 0;
+//			three_count = 0;
 			break;
 		case Two_Check:
 			two_count++;
@@ -350,7 +356,7 @@ int CheckTuneTwo(int state) {
 
 enum CheckTuneThreeState { Three_Init, Three_Check, Three_Release };
 int CheckTuneThree(int state) {
-	if (tune_three == 1)
+	if (play_tune_three == 1)
 		PORTB = 0x04;
 	switch(state) {
 		case Three_Init:
@@ -383,10 +389,10 @@ int CheckTuneThree(int state) {
 
 	switch(state) {
 		case Three_Init:
-			play_tune_one = 0;
-			play_tune_two = 0;
-			one_count = 0;
-			two_count = 0;
+//			play_tune_one = 0;
+//			play_tune_two = 0;
+//			one_count = 0;
+//			two_count = 0;
 			break;
 		case Three_Check:
 			three_count++;
@@ -418,17 +424,17 @@ int PlaySpeaker(int state) {
 			break;
 		case Speaker_Start:
 			if (tune_one == 1) {
-		//		PORTB = 0x01;
+				PORTB = 0x01;
 				play_tune_one = 1; // set global flag as 1
 				state = Speaker_Play_Tune_One;
 			}
 			else if (tune_two == 1) {
-		//		PORTB = 0x02;
+				PORTB = 0x02;
 				play_tune_two = 1; // set gloal flag to 1
 				state = Speaker_Play_Tune_Two;
 			}
 			else if (tune_three == 1) {
-		//		PORTB = 0x03;
+				PORTB = 0x03;
 				play_tune_three = 1; // set global flag to 1
 				state = Speaker_Play_Tune_Three;
 			}
@@ -594,8 +600,9 @@ int PrintSM (int state) {
 			LCD_Message("Let's play The Tune ");
 			LCD_Message("Score: ");
 			LCD_Integer(score);
-			LCD_Message("One_Count: ");
-			LCD_Integer(one_count);
+	//		LCD_Message("One_Count: ");
+	//		LCD_Integer(play_tune_one);
+	//		LCD_Integer(one_count);
 	//		LCD_Message("Two Count: ");
 	//		LCD_Integer(two_count);
 	//		LCD_Message("Three Count: ");
