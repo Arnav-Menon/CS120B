@@ -84,6 +84,11 @@ unsigned char one[6] = { 0x10, 0x10, 0x10, 0x10, 0x10, 0x10 }; // correect seque
 unsigned char two[8] = { 0x20, 0x10, 0x08, 0x04, 0x02, 0x01, 0x80, 0x40 }; // tune 2
 unsigned char three[10] = { 0x80, 0x40, 0x80, 0x10, 0x20, 0x80, 0x40, 0x80, 0x08, 0x10 }; // tune 3
 
+// counters for all 3 tunes
+unsigned short one_count = 0;
+unsigned short two_count = 0;
+unsigned short three_count = 0; 
+
 enum ButtonSMStates { Start, Check, Release };
 int ButtonSM (int state) {
 	switch(state) {
@@ -188,51 +193,208 @@ int PianoSM (int state) {
 
 	switch(state) {
 		case Piano_Start:
-			PORTB = 0x00;
+		//	PORTB = 0x00;
 			if (!tune_one && !tune_two && !tune_three) // if no tunes are playing, then turn off spekaer
 				set_PWM(0);
 			break;
 		case Piano_Check:
 			if ((~PINA & 0x01) == 0x01) {
 				set_PWM(523.25); // high C
-				PORTB = 0x01;
+		//		PORTB = 0x01;
 			}
 			else if ((~PINA & 0x02) == 0x02) {
 				set_PWM(493.88); // B
-				PORTB = 0x02;
+		//		PORTB = 0x02;
 			}
 			else if ((~PINA & 0x04) == 0x04) {
 				set_PWM(440.00); // A
-				PORTB = 0x03;
+		//		PORTB = 0x03;
 			}
 			else if ((~PINA & 0x08) == 0x08) {
 				set_PWM(392.00); // G
-				PORTB = 0x04;
+		//		PORTB = 0x04;
 			}
 			else if ((~PINA & 0x10) == 0x10) {
 				set_PWM(349.23); // F
-				PORTB = 0x05;
+		//		PORTB = 0x05;
 			}
 			else if ((~PINA & 0x20) == 0x20) {
 				set_PWM(329.63); // E
-				PORTB = 0x06;
+		//		PORTB = 0x06;
 			}
 			else if ((~PINA & 0x40) == 0x40) {
 				set_PWM(293.66); // D
-				PORTB = 0x07;
+		//		PORTB = 0x07;
 			}
 			else if ((~PINA & 0x80) == 0x80) {
 				set_PWM(261.63); // middle C
-				PORTB = 0x08;
+		//		PORTB = 0x08;
 			}
 			else {
 				set_PWM(0); // nothing
-				PORTB = 0xFF;
+		//		PORTB = 0xFF;
 			}
 			break;
 		default:
 			break;
 
+	}
+
+	return state;
+}
+
+
+enum CheckTuneOneState { One_Init, One_Check, One_Release };
+int CheckTuneOne(int state) {
+	if (tune_one == 1)
+		PORTB = 0x01;
+	switch(state) {
+		case One_Init:
+			if (play_tune_one && (~PINA & 0xFF) == one[one_count]) // if user wanted tune one, check it
+				state = One_Check;
+			else
+				state = One_Init;
+			break;
+		case One_Check:
+			if (one_count == 6) {
+				play_tune_one = 0;
+				one_count = 0; // reset counter
+				score++; // got the point for that tune
+				state = One_Init;
+			}
+			else if ((~PINA & 0xFF) == one[one_count] && one_count < 6) // bc 6 elements in array
+				state = One_Release;
+			else
+				state = One_Init;
+			break;
+		case One_Release:
+			if ((~PINA & 0xFF) == one[one_count]) // wait for button release
+				state = One_Release;
+			else
+				state = One_Check;
+		default:
+			state = One_Init;
+			break;
+	}
+
+	switch(state) {
+		case One_Init:
+			play_tune_two = 0;
+			play_tune_three = 0;
+			two_count = 0;
+			three_count = 0;
+			break;
+		case One_Check:
+			one_count++;
+			break;
+		case One_Release:
+			break;
+		default:
+			break;
+	}
+
+	return state;
+}
+
+enum CheckTuneTwoState { Two_Init, Two_Check, Two_Release };
+int CheckTuneTwo(int state) {
+	if (tune_two == 1)
+		PORTB = 0x02;
+	switch(state) {
+		case Two_Init:
+			if (play_tune_two && (~PINA & 0xFF) == two[two_count]) // if user wanted tune two, check it
+				state = Two_Check;
+			else
+				state = Two_Init;
+			break;
+		case Two_Check:
+			if (two_count == 8) {
+				play_tune_two = 0;
+				two_count = 0; // reset count
+				score++; // got the point for that tune
+				state = Two_Init;
+			}
+			else if ((~PINA & 0xFF) == two[two_count] && two_count < 8) // bc 8 elements in array
+				state = Two_Release;
+			else
+				state = Two_Init;
+			break;
+		case Two_Release:
+			if ((~PINA & 0xFF) == two[two_count]) // wait for button release
+				state = Two_Release;
+			else
+				state = Two_Check;
+		default:
+			state = Two_Init;
+			break;
+	}
+
+	switch(state) {
+		case Two_Init:
+			play_tune_one = 0;
+			play_tune_three = 0;
+			one_count = 0;
+			three_count = 0;
+			break;
+		case Two_Check:
+			two_count++;
+			break;
+		case Two_Release:
+			break;
+		default:
+			break;
+	}
+
+	return state;
+}
+
+enum CheckTuneThreeState { Three_Init, Three_Check, Three_Release };
+int CheckTuneThree(int state) {
+	if (tune_three == 1)
+		PORTB = 0x04;
+	switch(state) {
+		case Three_Init:
+			if (play_tune_three && (~PINA & 0xFF) == three[three_count]) // if user wanted tune three, check it
+				state = Three_Check;
+			else
+				state = Three_Init;
+			break;
+		case Three_Check:
+			if (three_count == 10) {
+				play_tune_three = 0;
+				three_count = 0; // reset counter
+				score++; // got the point for that melody
+				state = Three_Init;
+			}
+			else if ((~PINA & 0xFF) == three[three_count] && three_count < 6) // bc 6 elements in array
+				state = Three_Release;
+			else
+				state = Three_Init;
+			break;
+		case Three_Release:
+			if ((~PINA & 0xFF) == three[three_count]) // wait for button release
+				state = Three_Release;
+			else
+				state = Three_Check;
+		default:
+			state = Three_Init;
+			break;
+	}
+
+	switch(state) {
+		case Three_Init:
+			play_tune_one = 0;
+			play_tune_two = 0;
+			one_count = 0;
+			two_count = 0;
+			break;
+		case Three_Check:
+			three_count++;
+			break;
+		case Three_Release:
+			break;
+		default:
+			break;
 	}
 
 	return state;
@@ -432,6 +594,12 @@ int PrintSM (int state) {
 			LCD_Message("Let's play The Tune ");
 			LCD_Message("Score: ");
 			LCD_Integer(score);
+			LCD_Message("One_Count: ");
+			LCD_Integer(one_count);
+	//		LCD_Message("Two Count: ");
+	//		LCD_Integer(two_count);
+	//		LCD_Message("Three Count: ");
+	//		LCD_Integer(three_count);
 			break;
 		default: break;
 	}
@@ -447,8 +615,8 @@ int main(void) {
     DDRA - 0x00; PORTA = 0xFF; // use PORTA as inputs for "piano"
 //    byte score = 0;
 
-    static task task1, task2, task3, task4;
-    task *tasks[] = { &task1, &task2, &task3, &task4 };
+    static task task1, task2, task3, task4, task5, task6, task7;
+    task *tasks[] = { &task1, &task2, &task3, &task4, &task5, &task6, &task7 };
     const unsigned short numTasks = sizeof(tasks)/sizeof(task*);
 
     const char start = -1;
@@ -476,6 +644,24 @@ int main(void) {
     task4.period = 10;
     task4.elapsedTime = task4.period;
     task4.TickFct = &PianoSM;
+
+    // Task 5 (CheckTuneOne)
+    task5.state = start;
+    task5.period = 10;
+    task5.elapsedTime = task5.period;
+    task5.TickFct = &CheckTuneOne;
+
+    // Task 6 (CheckTuneTwo)
+    task6.state = start;
+    task6.period = 10;
+    task6.elapsedTime = task6.period;
+    task6.TickFct = &CheckTuneTwo;
+
+    // Task 7 (CheckTuneThree)
+    task7.state = start;
+    task7.period = 10;
+    task7.elapsedTime = task7.period;
+    task7.TickFct = &CheckTuneThree;
 
     LCD_Init(); 			// initialize LCD controller
     TimerSet(TIME);
