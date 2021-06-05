@@ -219,7 +219,7 @@ int CheckTuneOne(int state) {
 				PORTB = one_count;
 			if ((play_tune_one == 1) && (~PINA & 0xFF) == one[one_count]) // if user wanted tune one, check it
 				state = One_Check;
-			else if (((!PINA & 0xFF) != one[one_count]) && ((~PINA & 0xFF) != 0x00)) {
+			else if (((~PINA & 0xFF) != one[one_count]) && ((~PINA & 0xFF) != 0x00)) {
 				state = One_Init;
 				one_count = 0;
 			}
@@ -240,7 +240,6 @@ int CheckTuneOne(int state) {
 			}
 			else {
 				state = One_Init;
-				//one_count = 0;
 			}
 			break;
 		case One_Release:
@@ -276,6 +275,10 @@ int CheckTuneTwo(int state) {
 				PORTB = two_count;
 			if (play_tune_two && (~PINA & 0xFF) == two[two_count]) // if user wanted tune two, check it
 				state = Two_Check;
+			else if (((~PINA & 0xFF) != two[two_count]) && ((~PINA & 0xFF) != 0x00)) {
+				state = Two_Init;
+				two_count = 0;
+			}
 			else
 				state = Two_Init;
 			break;
@@ -326,6 +329,10 @@ int CheckTuneThree(int state) {
 				PORTB = three_count;
 			if (play_tune_three && (~PINA & 0xFF) == three[three_count]) // if user wanted tune three, check it
 				state = Three_Check;
+			else if (((~PINA & 0xFF) != three[three_count]) && ((~PINA & 0xFF) != 0x00)) {
+				state = Three_Init;
+				three_count = 0;
+			}
 			else
 				state = Three_Init;
 			break;
@@ -371,8 +378,6 @@ int CheckTuneThree(int state) {
 enum PlaySpeakerState { Speaker_Init, Speaker_Check, Speaker_Start, Speaker_Play_Tune_One, Speaker_Play_Tune_Two, Speaker_Play_Tune_Three, Speaker_Release };
 unsigned short i = 0;
 int PlaySpeaker(int state) {
-	//unsigned char button = ~PINA & 0x01; // check if PA0 pressed
-	//PWM_on();
 	switch(state) {
 		case Speaker_Init:
 			PWM_on();
@@ -531,8 +536,6 @@ int PlaySpeaker(int state) {
 			i++;
 			break;
 		case Speaker_Release:
-			//PORTB = 0x04;
-			//PWM_off();
 			i = 0;
 			tune_one = 0;
 			tune_two = 0; // reset global flag
@@ -567,7 +570,7 @@ int PrintSM (int state) {
 int main(void) {
     /* Insert DDR and PORT initializations */
     DDRD = 0x3F; // set D0..D5 as outputs for LCD
-    DDRC = 0x00; PORTC = 0xFF;  // use PORTC as inputs for keypad
+    DDRC = 0x00; PORTC = 0xFF;  // use PORTC as inputs for what meoldy to play 
     DDRB = 0xFF; // PB6 is 1 for the speaker output 
     DDRA - 0x00; PORTA = 0xFF; // use PORTA as inputs for "piano"
 
