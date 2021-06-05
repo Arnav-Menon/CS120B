@@ -108,8 +108,6 @@ int ButtonSM (int state) {
 				tune_three = 1;
 				state = Release;
 			}
-	//		else if ((~PINC & 0xFF) == 0x00) // no button is pressed
-	//			state = Check;
 			else
 				state = Check;
 			break;
@@ -126,31 +124,9 @@ int ButtonSM (int state) {
 	}
 
 	switch(state) {
-		case Start: /*PORTB = 0x06; */break;
-		case Check:
-			  // PORTB = 0x07;
-			   if ((~PINC & 0x01) == 0x01) { // if PC0 pressed
-				   //PORTB = 0x01;
-				   score++;
-			   }
-			   else if ((~PINC & 0x02) == 0x02) { // if PC1 pressed
-				//   PORTB = 0x02;
-				   score++;
-			   }
-			   else if ((~PINC & 0x04) == 0x04) { // if PC2 pressed
-				 //  PORTB = 0x03;
-				   score++;
-			   }
-			   else if ((~PINC & 0x08) == 0x08) { // if PC3 pressed
-				//   PORTB = 0x04;
-				   score++;
-			   }
-			   else if ((~PINC & 0x10) == 0x10) { // if PC4 pressed
-				 //  PORTB = 0x05;
-				   score++;
-			   }
-			   break;
-		case Release: /*PORTB = 0x10; score--;*/ break;
+		case Start: break;
+		case Check: break;
+		case Release: break;
 		default: break;
 	}
 
@@ -193,46 +169,36 @@ int PianoSM (int state) {
 
 	switch(state) {
 		case Piano_Start:
-		//	PORTB = 0x00;
 			if (!tune_one && !tune_two && !tune_three) // if no tunes are playing, then turn off spekaer
 				set_PWM(0);
 			break;
 		case Piano_Check:
 			if ((~PINA & 0x01) == 0x01) {
 				set_PWM(523.25); // high C
-		//		PORTB = 0x01;
 			}
 			else if ((~PINA & 0x02) == 0x02) {
 				set_PWM(493.88); // B
-		//		PORTB = 0x02;
 			}
 			else if ((~PINA & 0x04) == 0x04) {
 				set_PWM(440.00); // A
-		//		PORTB = 0x03;
 			}
 			else if ((~PINA & 0x08) == 0x08) {
 				set_PWM(392.00); // G
-		//		PORTB = 0x04;
 			}
 			else if ((~PINA & 0x10) == 0x10) {
 				set_PWM(349.23); // F
-		//		PORTB = 0x05;
 			}
 			else if ((~PINA & 0x20) == 0x20) {
 				set_PWM(329.63); // E
-		//		PORTB = 0x06;
 			}
 			else if ((~PINA & 0x40) == 0x40) {
 				set_PWM(293.66); // D
-		//		PORTB = 0x07;
 			}
 			else if ((~PINA & 0x80) == 0x80) {
 				set_PWM(261.63); // middle C
-		//		PORTB = 0x08;
 			}
 			else {
 				set_PWM(0); // nothing
-		//		PORTB = 0xFF;
 			}
 			break;
 		default:
@@ -246,20 +212,23 @@ int PianoSM (int state) {
 
 enum CheckTuneOneState { One_Init, One_Check, One_Release };
 int CheckTuneOne(int state) {
-//	if (play_tune_one == 1)
-//		PORTB = 0x0F;
+
 	switch(state) {
 		case One_Init:
-			if (play_tune_one == 1)
-				PORTB = 0x0F;
-			PORTB = 0x00;
-			PORTB = one_count;
+			if (one_count == 0 && two_count == 0 && three_count == 0)
+				PORTB = one_count;
 			if ((play_tune_one == 1) && (~PINA & 0xFF) == one[one_count]) // if user wanted tune one, check it
 				state = One_Check;
+			else if (((!PINA & 0xFF) != one[one_count]) && ((~PINA & 0xFF) != 0x00)) {
+				state = One_Init;
+				one_count = 0;
+			}
 			else
 				state = One_Init;
 			break;
 		case One_Check:
+			if (two_count == 0 && three_count == 0)
+				PORTB = one_count;
 			if (one_count == 6) {
 				play_tune_one = 0;
 				one_count = 0; // reset counter
@@ -268,10 +237,11 @@ int CheckTuneOne(int state) {
 			}
 			else if ((~PINA & 0xFF) == one[one_count] && (one_count < 6)) { // bc 6 elements in array
 				state = One_Release;
-				PORTB = 0x01;
 			}
-			else
+			else {
 				state = One_Init;
+				//one_count = 0;
+			}
 			break;
 		case One_Release:
 			if ((~PINA & 0xFF) == one[one_count]) // wait for button release
@@ -285,10 +255,6 @@ int CheckTuneOne(int state) {
 
 	switch(state) {
 		case One_Init:
-//			play_tune_two = 0;
-//			play_tune_three = 0;
-//			two_count = 0;
-//			three_count = 0;
 			break;
 		case One_Check:
 			one_count++;
@@ -304,16 +270,18 @@ int CheckTuneOne(int state) {
 
 enum CheckTuneTwoState { Two_Init, Two_Check, Two_Release };
 int CheckTuneTwo(int state) {
-	if (play_tune_two == 1)
-		PORTB = 0x02;
 	switch(state) {
 		case Two_Init:
+			if (one_count == 0 && two_count == 0 && three_count == 0)
+				PORTB = two_count;
 			if (play_tune_two && (~PINA & 0xFF) == two[two_count]) // if user wanted tune two, check it
 				state = Two_Check;
 			else
 				state = Two_Init;
 			break;
 		case Two_Check:
+			if (one_count == 0 && three_count == 0)
+				PORTB = two_count;
 			if (two_count == 8) {
 				play_tune_two = 0;
 				two_count = 0; // reset count
@@ -337,10 +305,6 @@ int CheckTuneTwo(int state) {
 
 	switch(state) {
 		case Two_Init:
-//			play_tune_one = 0;
-//			play_tune_three = 0;
-//			one_count = 0;
-//			three_count = 0;
 			break;
 		case Two_Check:
 			two_count++;
@@ -356,16 +320,18 @@ int CheckTuneTwo(int state) {
 
 enum CheckTuneThreeState { Three_Init, Three_Check, Three_Release };
 int CheckTuneThree(int state) {
-	if (play_tune_three == 1)
-		PORTB = 0x04;
 	switch(state) {
 		case Three_Init:
+			if (one_count == 0 && two_count == 0 && three_count == 0)
+				PORTB = three_count;
 			if (play_tune_three && (~PINA & 0xFF) == three[three_count]) // if user wanted tune three, check it
 				state = Three_Check;
 			else
 				state = Three_Init;
 			break;
 		case Three_Check:
+			if (one_count == 0 && two_count == 0)
+				PORTB = three_count;
 			if (three_count == 10) {
 				play_tune_three = 0;
 				three_count = 0; // reset counter
@@ -389,10 +355,6 @@ int CheckTuneThree(int state) {
 
 	switch(state) {
 		case Three_Init:
-//			play_tune_one = 0;
-//			play_tune_two = 0;
-//			one_count = 0;
-//			two_count = 0;
 			break;
 		case Three_Check:
 			three_count++;
@@ -424,17 +386,14 @@ int PlaySpeaker(int state) {
 			break;
 		case Speaker_Start:
 			if (tune_one == 1) {
-				PORTB = 0x01;
 				play_tune_one = 1; // set global flag as 1
 				state = Speaker_Play_Tune_One;
 			}
 			else if (tune_two == 1) {
-				PORTB = 0x02;
 				play_tune_two = 1; // set gloal flag to 1
 				state = Speaker_Play_Tune_Two;
 			}
 			else if (tune_three == 1) {
-				PORTB = 0x03;
 				play_tune_three = 1; // set global flag to 1
 				state = Speaker_Play_Tune_Three;
 			}
@@ -530,7 +489,6 @@ int PlaySpeaker(int state) {
 			i++;
 			break;
 		case Speaker_Play_Tune_Two:
-		//	PORTB = 0xFF;
 			if (i < 1)
 				set_PWM(329.63);
 			else if (i < 2)
@@ -573,7 +531,7 @@ int PlaySpeaker(int state) {
 			i++;
 			break;
 		case Speaker_Release:
-			PORTB = 0x04;
+			//PORTB = 0x04;
 			//PWM_off();
 			i = 0;
 			tune_one = 0;
@@ -588,7 +546,6 @@ int PlaySpeaker(int state) {
 
 enum PrintSMStates { Print_Print };
 int PrintSM (int state) {
-//	score++;
 	switch(state) {
 		case Print_Print: state = Print_Print; break;
 		default: state = Print_Print; break;
@@ -600,13 +557,6 @@ int PrintSM (int state) {
 			LCD_Message("Let's play The Tune ");
 			LCD_Message("Score: ");
 			LCD_Integer(score);
-	//		LCD_Message("One_Count: ");
-	//		LCD_Integer(play_tune_one);
-	//		LCD_Integer(one_count);
-	//		LCD_Message("Two Count: ");
-	//		LCD_Integer(two_count);
-	//		LCD_Message("Three Count: ");
-	//		LCD_Integer(three_count);
 			break;
 		default: break;
 	}
@@ -620,7 +570,6 @@ int main(void) {
     DDRC = 0x00; PORTC = 0xFF;  // use PORTC as inputs for keypad
     DDRB = 0xFF; // PB6 is 1 for the speaker output 
     DDRA - 0x00; PORTA = 0xFF; // use PORTA as inputs for "piano"
-//    byte score = 0;
 
     static task task1, task2, task3, task4, task5, task6, task7;
     task *tasks[] = { &task1, &task2, &task3, &task4, &task5, &task6, &task7 };
@@ -673,7 +622,6 @@ int main(void) {
     LCD_Init(); 			// initialize LCD controller
     TimerSet(TIME);
     TimerOn();
-    //msDelay(TIME);			// wait
     while (1) {
 	   for (int i = 0; i < numTasks; i++) {
 		   if (tasks[i]->elapsedTime == tasks[i]->period) {
@@ -682,7 +630,6 @@ int main(void) {
 		   }
 		   tasks[i]->elapsedTime += tasks[i]->period;
 	   }
-	   //msDelay(TIME);
 	   while (!TimerFlag);
 	   TimerFlag = 0;
     }
