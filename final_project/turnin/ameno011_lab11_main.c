@@ -6,6 +6,10 @@
  *
  *	I acknowledge all content contained herein, excluding template or example
  *	code, is my own original work.
+ *
+ *      I got the LCD code from a PDF from w8bh.net. Type "Add an LCD to your AVR microcontroller" into Google and it should be one of the first links.
+ * 
+ *      LINK TO VIDEO: https://drive.google.com/file/d/1tRGdpu04_i-yTgBt63Wsq8JS9eouYuXq/view?usp=sharing
  */
 #include <avr/io.h>
 #include <util/delay.h> // ysed for _delay_ms function
@@ -14,8 +18,6 @@
 #endif
 
 #include "lcd.h" // LCD code in directory
-// keypad doesn't work
-//#include "keypad.h"
 #include "timer.h"
 
 #define TIME 500
